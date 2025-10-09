@@ -1,6 +1,12 @@
 package main
 
-import "flag"
+import (
+	"flag"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+)
 
 type CmdFlags struct {
 	Add    string `short:"a" long:"add" description:"Add a new todo"`
@@ -19,4 +25,34 @@ func NewCmdFlags() *CmdFlags {
 	flag.StringVar(&cf.Edit, "edit", "", "Edit a todo")
 	flag.Parse()
 	return &cf
+}
+
+func (cf *CmdFlags) Execute(todos *Todos) {
+	switch {
+	case cf.List:
+		todos.Print()
+	case cf.Add != "":
+		todos.Add(cf.Add)
+	case cf.Edit != "":
+		parts := strings.SplitN(cf.Edit, ":", 2)
+		if len(parts) != 2 {
+			fmt.Println("Error: Invalid format for edit. Please use index:new_title")
+			os.Exit(1)
+		}
+		index, err := strconv.Atoi(parts[0])
+		if err != nil {
+			fmt.Println("Error: Invalid index for edit.")
+			os.Exit(1)
+
+		}
+		todos.Edit(index, parts[1])
+	case cf.Toggle != -1:
+		todos.Toggle(cf.Toggle)
+
+	case cf.Del != -1:
+		todos.Delete(cf.Del)
+
+	default:
+		fmt.Println("Invalid command")
+	}
 }
